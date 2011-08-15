@@ -2,6 +2,7 @@ package com.Crash.UnCraft;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.server.CraftingManager;
@@ -16,6 +17,7 @@ import org.bukkit.block.Dispenser;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.inventory.CraftRecipe;
 import org.bukkit.entity.Item;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.inventory.Inventory;
@@ -25,7 +27,15 @@ import org.bukkit.material.MaterialData;
 
 public class UnCraftBlockListener extends BlockListener {
 
-	public List<ItemStack> getItemList(ShapedRecipes sr){
+	private UnCraft plugin;
+	
+	public UnCraftBlockListener(UnCraft instance){
+		
+		plugin = instance;
+		
+	}
+	
+	private List<ItemStack> getItemList(ShapedRecipes sr){
 		
 		Field field = null;
 		
@@ -87,7 +97,7 @@ public class UnCraftBlockListener extends BlockListener {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<ItemStack> getItemList(ShapelessRecipes sr){
+	private List<ItemStack> getItemList(ShapelessRecipes sr){
 		
 		Field field = null;
 		
@@ -144,6 +154,128 @@ public class UnCraftBlockListener extends BlockListener {
 		
 	}
 	
+	public float getDurabilityRate(ItemStack item){
+		
+		switch(item.getTypeId()){
+		
+			case 268://Wood tools
+			case 269:
+			case 270:
+			case 271:
+			case 290:
+				return (float)(60 - item.getDurability()) / 60;
+				
+			case 272://Stone tools
+			case 273:
+			case 274:
+			case 275:
+			case 291:
+				return (float)(132 - item.getDurability()) / 132;
+				
+			case 256://Iron tools
+			case 257:
+			case 258:
+			case 267:
+			case 292:
+				return (float)(251 - item.getDurability()) / 251;
+				
+			case 283://Gold tools
+			case 284:
+			case 285:
+			case 286:
+			case 294:
+				return (float)(30 - item.getDurability()) / 30;
+				
+			case 276://Diamond tools
+			case 277:
+			case 278:
+			case 279:
+			case 293:
+				return (float)(1562 - item.getDurability()) / 1562;
+				
+			case 298://Leather armor
+				return (float)(34 - item.getDurability()) / 34;
+			case 299:
+				return (float)(49 - item.getDurability()) / 49;
+			case 300:
+				return (float)(46 - item.getDurability()) / 46;
+			case 301:
+				return (float)(40 - item.getDurability()) / 40;
+				
+			case 302://Chainmail armor
+				return (float)(67 - item.getDurability()) / 67;
+			case 303:
+				return (float)(96 - item.getDurability()) / 96;
+			case 304:
+				return (float)(92 - item.getDurability()) / 92;
+			case 305:
+				return (float)(79 - item.getDurability()) / 79;
+				
+			case 306://Iron armor
+				return (float)(136 - item.getDurability()) / 136;
+			case 307:
+				return (float)(192 - item.getDurability()) / 192;
+			case 308:
+				return (float)(184 - item.getDurability()) / 184;
+			case 309:
+				return (float)(160 - item.getDurability()) / 160;
+				
+			case 314://Gold armor
+				return (float)(68 - item.getDurability()) / 68;
+			case 315:
+				return (float)(96 - item.getDurability()) / 96;
+			case 316:
+				return (float)(92 - item.getDurability()) / 92;
+			case 317:
+				return (float)(80 - item.getDurability()) / 80;
+				
+			case 310://Diamond armor
+				return (float)(272 - item.getDurability()) / 272;
+			case 311:
+				return (float)(384 - item.getDurability()) / 384;
+			case 312:
+				return (float)(368 - item.getDurability()) / 368;
+			case 313:
+				return (float)(320 - item.getDurability()) / 320;
+				
+			case 259:
+			case 346:
+				return (float)(65 - item.getDurability()) / 65;
+				
+			case 359:
+				return (float)(239 - item.getDurability()) / 239;
+				
+			default:
+				return -1.0f;
+		
+		}
+		
+	}
+	
+	@SuppressWarnings("unused")
+	private void splitList(float cutrate, List<ItemStack> list){
+		
+		List<ItemStack> valuables = new ArrayList<ItemStack>();
+		
+		for(ItemStack i : list)
+			if(plugin.matchItem(i))
+				valuables.add(i);
+		
+		int size = valuables.size();
+		
+		cutrate /= size;
+		
+		for(Iterator<ItemStack> iter = valuables.iterator(); iter.hasNext();){
+			
+			ItemStack i = iter.next();
+			i.setAmount((int)(i.getAmount() * cutrate));
+			if(i.getAmount() == 0)
+				list.remove(i);
+			
+		}
+			
+	}
+	
 	@Override
 	public void onBlockDispense(BlockDispenseEvent event){
 
@@ -168,7 +300,7 @@ public class UnCraftBlockListener extends BlockListener {
 			else
 				type = ((ShapelessRecipes)o).b().id;
 
-			if(type == event.getItem().getTypeId()){
+			if(type == event.getItem().getTypeId() && !plugin.blockedItem(type)){
 				
 				recipe = true;
 
@@ -176,6 +308,10 @@ public class UnCraftBlockListener extends BlockListener {
 					droplist = getItemList((ShapelessRecipes)o); 
 				else
 					droplist = getItemList((ShapedRecipes)o);
+				
+				float cut = getDurabilityRate(event.getItem());
+				
+				splitList(cut, droplist);
 				
 				break;
 
@@ -227,5 +363,6 @@ public class UnCraftBlockListener extends BlockListener {
 		}
 
 	}
+	
 
 }

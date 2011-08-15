@@ -1,3 +1,7 @@
 name: UnCraft
 version: 0.1
 main: com.Crash.UnCraft.UnCraft
+commands:
+  s:
+    description:
+    usage:
